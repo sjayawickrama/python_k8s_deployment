@@ -70,7 +70,7 @@ def create_db_connection(app_config):
         # We print the error but do not raise it, allowing retries
         print(f"Error connecting to MySQL at {app_config['DB_HOST']}: {err}")
         return None
-#comment test new
+#comment test nefdfdfd
 def initialize_database(app_config):
     """Initializes the database and creates a sample user table/user, using app_config."""
     conn = None
