@@ -1,49 +1,59 @@
-// Jenkinsfile (Place this in the root of your GitHub repository)
-
 pipeline {
-    agent any 
-    
+    // The 'agent any' is used globally, assuming the Jenkins agent has Docker installed
+    agent any
+
+    // Define environment variables if needed
     environment {
-        // Defines the Python version we are targeting
-        PYTHON_VERSION = '3.11' 
+        PR_NAME = 'Review Pipeline'
+        // Define other environment variables (like test-specific paths) here
     }
 
     stages {
-        stage('Checkout PR Code') {
+        stage('Checkout Source Code') {
             steps {
-                // IMPORTANT: When triggered by a PR hook, 'checkout scm' automatically
-                // checks out the code from the head of the branch being reviewed ('test').
-                checkout scm 
+                // Ensure the code (including Dockerfile and requirements.txt) is checked out
+                checkout scm
             }
         }
 
-        stage('Run Unit Tests') {
+        stage('Run Unit Tests in Docker') {
+            // Use the Dockerfile located in the repository root to build and run the container
+            agent {
+                dockerfile {
+                    // Assumes the Dockerfile is named 'Dockerfile' and is in the root
+                    // The Jenkins pipeline will automatically execute steps in the WORKDIR defined in the Dockerfile (/app)
+                    
+                    // You can optionally pass arguments to the 'docker build' command if needed
+                    // For example: args '-f custom/Dockerfile.test'
+                }
+            }
             steps {
-                echo 'Setting up environment and running tests...'
+                echo "Running unit tests inside the custom Python container..."
+                // Since requirements are already installed during the Docker image build (RUN pip install -r requirements.txt),
+                // we skip the failing 'venv' creation and 'pip install' steps.
                 
-                // 1. Create a temporary Python virtual environment
-                sh 'python3 -m venv venv'
+                // Now, just run your test command directly.
+                // Assuming your tests are run using the standard unittest discover command:
+                sh 'python -m unittest discover'
                 
-                // 2. Install dependencies (using the direct path is more robust in Jenkins)
-                sh './venv/bin/pip install -r requirements.txt'
-                sh './venv/bin/pip install pytest'
-                
-                // 3. Run all unit tests. If any fail, the pipeline fails.
-                sh './venv/bin/pytest'
+                // If you use pytest, the command would be 'pytest'
+                // sh 'pytest'
             }
         }
+
+        // Add deployment stage or any subsequent stages here
     }
-    
+
     post {
         always {
-            // Clean up the temporary virtual environment
-            sh 'rm -rf venv'
-        }
-        success {
-            echo 'Review pipeline passed! Unit tests successful. Code is safe to merge.'
-        }
-        failure {
-            echo 'Review pipeline failed. Unit test failures found. PR cannot be merged yet.'
+            script {
+                // The 'dockerfile' agent automatically cleans up the container after the stage completes.
+                if (currentBuild.result != 'SUCCESS') {
+                    echo "Review pipeline failed. Unit test failures found. PR cannot be merged yet."
+                } else {
+                    echo "Review pipeline passed. Unit tests succeeded."
+                }
+            }
         }
     }
 }

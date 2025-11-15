@@ -1,0 +1,49 @@
+// Jenkinsfile (Place this in the root of your GitHub repository)
+
+pipeline {
+    agent any 
+    
+    environment {
+        // Defines the Python version we are targeting
+        PYTHON_VERSION = '3.11' 
+    }
+
+    stages {
+        stage('Checkout PR Code') {
+            steps {
+                // IMPORTANT: When triggered by a PR hook, 'checkout scm' automatically
+                // checks out the code from the head of the branch being reviewed ('test').
+                checkout scm 
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                echo 'Setting up environment and running tests...'
+                
+                // 1. Create a temporary Python virtual environment
+                sh 'python3 -m venv venv'
+                
+                // 2. Install dependencies (using the direct path is more robust in Jenkins)
+                sh './venv/bin/pip install -r requirements.txt'
+                sh './venv/bin/pip install pytest'
+                
+                // 3. Run all unit tests. If any fail, the pipeline fails.
+                sh './venv/bin/pytest'
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Clean up the temporary virtual environment
+            sh 'rm -rf venv'
+        }
+        success {
+            echo 'Review pipeline passed! Unit tests successful. Code is safe to merge.'
+        }
+        failure {
+            echo 'Review pipeline failed. Unit test failures found. PR cannot be merged yet.'
+        }
+    }
+}
