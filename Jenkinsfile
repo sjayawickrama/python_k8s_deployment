@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+    
+    // Define the temporary VENV path once using Jenkins environment variables
+    environment {
+        // Use a safe, unique path in /tmp for the venv
+		// rrrrrrrrrrrrr
+        VENV_DIR = "/tmp/venv-${UUID.randomUUID()}"
+    }
+     triggers {
+         githubPush()
+    }
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git branch: 'test', url: 'https://github.com/sjayawickrama/python_k8s_deployment.git'
+            }
+        }
+        
+        stage('Install Dependencies') {
+            steps {
+                dir('my_new_project') {
+                    // 1. Create the virtual environment in the safe /tmp location
+                    sh "python3 -m venv ${VENV_DIR}"
+                    
+                    // 2. Install dependencies by explicitly calling pip from the VENV_DIR path.
+                    sh "${VENV_DIR}/bin/pip install -r requirements.txt"
+                }
+            }
+        }
+        
+        stage('Unit Test') {
+            steps {
+                dir('my_new_project') {
+                    // Call python explicitly from the VENV_DIR path to run tests
+                    sh "${VENV_DIR}/bin/python -m pytest"
+                }
+            }
+        }
+		stage('Docker Build & Tag') {
+            steps {
+                dir('my_new_project') {
+                    script {
+                        withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
+                            sh "docker build -t sjayawickrama89/frontend_python:latest ."
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Cleanup') {
+            // No 'when' block means this stage always executes by default, 
+            // ensuring cleanup regardless of success/failure in earlier stages.
+            steps {
+                sh "rm -rf ${VENV_DIR}"
+            }
+        }
+    }
+}
