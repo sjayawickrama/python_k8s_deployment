@@ -7,7 +7,7 @@ pipeline {
         VENV_DIR = "/tmp/venv-${UUID.randomUUID()}"
     }
     triggers {
-	    githubPullRequests()
+	    githubPullRequests(pattern: '.*', cron: '', cancelQueued: false)
 	}
     stages {
         stage('Git Checkout') {
