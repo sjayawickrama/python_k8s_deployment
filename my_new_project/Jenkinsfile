@@ -4,7 +4,7 @@ pipeline {
     // Define the temporary VENV path once using Jenkins environment variables
     environment {
         // Use a safe, unique path in /tmp for the venv
-		// ajsashhhasasasasassa
+		// ajsashgfgfgfhhasasasasassa
         VENV_DIR = "/tmp/venv-${UUID.randomUUID()}"
     }
      triggers {
