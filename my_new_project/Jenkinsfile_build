@@ -1,0 +1,82 @@
+pipeline {
+    agent any
+    
+    // Define the temporary VENV path once using Jenkins environment variables
+    environment {
+        // VENV_DIR uses a unique path based on the build ID for cleanup
+        VENV_DIR = "/tmp/venv-${env.BUILD_ID}"
+    }
+
+    // This ensures the VENV is deleted even if the build fails
+    post {
+        always {
+            // Use sh with 'returnStatus: true' to prevent failure if VENV_DIR doesn't exist
+            script {
+                if (env.BRANCH_NAME.startsWith('PR-')) {
+                    echo "Cleaning up virtual environment: ${VENV_DIR}"
+                    sh "rm -rf ${VENV_DIR}"
+                }
+            }
+        }
+    }
+
+    stages {
+        stage('Automatic Checkout') {
+            // **NOTE:** The 'git' step is removed.
+            // In Multibranch Pipelines, 'checkout scm' is implied and automatically
+            // checks out the correct code (the PR merged with the target branch).
+            steps {
+                echo "Repository checked out automatically by Multibranch Pipeline."
+            }
+        }
+        
+        stage('Install Dependencies') {
+            when {
+                // **CRITICAL:** Only run this stage if the job is a Pull Request build.
+                // BRANCH_NAME will be in the format 'PR-XXX' for a Pull Request.
+                expression { return env.BRANCH_NAME.startsWith('PR-') }
+            }
+            steps {
+                dir('my_new_project') {
+                    echo "Installing dependencies for PR ${env.CHANGE_ID}"
+                    // 1. Create the virtual environment in the safe /tmp location
+                    sh "python3 -m venv ${VENV_DIR}"
+                    
+                    // 2. Install dependencies by explicitly calling pip from the VENV_DIR path.
+                    sh "${VENV_DIR}/bin/pip install -r requirements.txt"
+                }
+            }
+        }
+        
+        stage('Unit Test (Pytest)') {
+            when {
+                // Only run tests on a Pull Request build
+                expression { return env.BRANCH_NAME.startsWith('PR-') }
+            }
+            steps {
+                dir('my_new_project') {
+                    echo "Running Pytest for PR ${env.CHANGE_ID}"
+                    // Call python explicitly from the VENV_DIR path to run tests
+                    // Add --junitxml to generate a report for the Jenkins JUnit Plugin
+                    sh "${VENV_DIR}/bin/python -m pytest --junitxml=reports/results.xml"
+                }
+            }
+        }
+        
+        stage('Publish Results') {
+            when {
+                // Only publish results for the PR build
+                expression { return env.BRANCH_NAME.startsWith('PR-') }
+            }
+            steps {
+                script {
+                    // Requires the JUnit Plugin to process the test report
+                    junit 'my_new_project/reports/results.xml'
+                    
+                    // Optional: Use the GitHub checks plugin to post results back to the PR
+                    echo "Test results published to Jenkins and GitHub."
+                }
+            }
+        }
+    }
+}
