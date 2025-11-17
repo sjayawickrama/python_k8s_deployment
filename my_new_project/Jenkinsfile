@@ -6,8 +6,8 @@ pipeline {
         // Use a safe, unique path in /tmp for the venv
         VENV_DIR = "/tmp/venv-${UUID.randomUUID()}"
     }
-    triggers {
-        githubPullRequest(spec: '*', cancelBuildsOnUpdate: false)
+     triggers {
+        githubPullRequests(spec: '*', cancelQueued: false)
     }
     stages {
         stage('Git Checkout') {
