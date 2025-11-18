@@ -1,0 +1,44 @@
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-deployment
+  labels:
+    app: my-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-app-container
+        # 🚨 IMPORTANT: This will be replaced by Jenkins with the correct image tag
+        image: your-docker-hub-username/your-image-name:latest 
+        ports:
+        - containerPort: 8080
+      # If image is private, use this section
+      # imagePullSecrets:
+      # - name: docker-reg-secret
+      #
+-------
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  selector:
+    app: my-app
+  type: NodePort # Changed from LoadBalancer to NodePort
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30000 # Optional: You can specify a port in the range 30000-32767.
+                        # If omitted, Kubernetes will automatically assign one.
