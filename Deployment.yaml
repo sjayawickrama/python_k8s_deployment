@@ -25,7 +25,7 @@ spec:
       # imagePullSecrets:
       # - name: docker-reg-secret
       #
--------
+---
 
 
 apiVersion: v1
