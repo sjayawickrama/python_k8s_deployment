@@ -24,3 +24,21 @@ spec:
       # If image is private, use this section
       # imagePullSecrets:
       # - name: docker-reg-secret
+      #
+-------
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+spec:
+  selector:
+    app: my-app
+  type: NodePort # Changed from LoadBalancer to NodePort
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30000 # Optional: You can specify a port in the range 30000-32767.
+                        # If omitted, Kubernetes will automatically assign one.
