@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: my-app-container
-        # 🚨 IMPORTANT: This will be replaced by Jenkins with the correct image tag
+        # 🚨 IMPORTANT: This will be replaced by Jenkinfdfds with the correct image tag
         image: your-docker-hub-username/your-image-name:latest 
         ports:
         - containerPort: 8080
