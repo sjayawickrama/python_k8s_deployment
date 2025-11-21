@@ -11,4 +11,4 @@ spec:
       port: 8080
       targetPort: 8080
       nodePort: 30000 # Optional: You can test specidsdfdfdsfy afdsdsdsd port in the range 30000-32767.
-                        # If omitted, Kubernetes will automatically assign one.
+                        # If omitted, hfghfKubernetes will automatically assign one.
