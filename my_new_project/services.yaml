@@ -10,5 +10,5 @@ spec:
     - protocol: TCP
       port: 8080
       targetPort: 8080
-      nodePort: 30000 # Optional: You can test specidsdfdfgfgfgfgfdsfy afdsdsdhjgjgjsd port in the range 30000-32767.
+      nodePort: 30000 # Optional: You can test specidsdfdfgfgfgfgfdsdsdsdsfy afdsdsdhjgjgjsd port in the range 30000-32767.
                         # If omitted, hfghfKubernetes will automatically assign one.
